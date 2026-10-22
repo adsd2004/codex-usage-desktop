@@ -2878,6 +2878,26 @@ describe("App", () => {
     expect(screen.getByRole("tab", { name: "Dashboard" })).toHaveAttribute("aria-selected", "true");
   });
 
+  it("switches to Korean in settings and saves the language preference", async () => {
+    mockLoadedDashboard();
+    render(<App />);
+
+    await userEvent.click(await screen.findByRole("button", { name: "Settings" }));
+    const languageSelect = screen.getAllByRole("combobox").find((element) => element.textContent === "English")!;
+    await waitFor(() => expect(languageSelect).toBeEnabled());
+    fireEvent.keyDown(languageSelect, { key: "ArrowDown" });
+    await userEvent.click(await screen.findByRole("option", { name: "한국어" }));
+
+    expect(await screen.findByRole("heading", { name: "설정", level: 1 })).toBeInTheDocument();
+    expect(screen.getByText("언어 설정")).toBeInTheDocument();
+    expect(screen.getByText("앱의 표시 언어를 변경합니다.")).toBeInTheDocument();
+    expect(localStorage.getItem("language")).toBe("ko");
+    expect(i18n.resolvedLanguage).toBe("ko");
+    await userEvent.click(screen.getByRole("button", { name: "뒤로" }));
+    expect(screen.getByRole("tab", { name: "대시보드" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("button", { name: "설정" })).toBeInTheDocument();
+  });
+
   it("shows launch at login as disabled when autostart is not enabled", async () => {
     mockLoadedDashboard();
     autostartIsEnabledMock.mockResolvedValue(false);

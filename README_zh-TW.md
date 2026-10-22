@@ -130,7 +130,7 @@ Codex Usage Desktop 的設計讓你隨時掌握用量，同時減少對工作的
 - macOS 選單列 / Windows 系統匣
 - 登入時自動啟動
 - 自動檢查更新
-- English、简体中文、繁體中文和日本語
+- English、简体中文、繁體中文、日本語和한국어
 - 偵測 Windows WSL 中的 Codex 工作階段
 - 淺色與深色主題
 

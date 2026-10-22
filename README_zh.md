@@ -130,7 +130,7 @@ Codex Usage Desktop 随时可用，尽量减少打扰：
 - macOS 菜单栏 / Windows 系统托盘
 - 开机启动
 - 自动检查更新
-- English、简体中文、繁體中文和日本語
+- English、简体中文、繁體中文、日本語和한국어
 - Windows WSL Codex 会话检测
 - 浅色与深色主题
 
