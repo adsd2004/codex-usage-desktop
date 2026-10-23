@@ -532,6 +532,14 @@
       "caveat": "목록에는 마지막 관측 스냅샷의 잔여 한도를 표시합니다. 값은 로그에 기록된 정수 스냅샷으로 추정하며, 초기화 기간별로 구분하여 표시합니다."
     },
     "detail": {
+      "search_placeholder": "불러온 세션 검색 (⌘/Ctrl+F)",
+      "search_pending": "검색 중…",
+      "search_empty": "검색 결과 없음",
+      "search_error": "검색할 수 없음",
+      "search_previous": "이전 검색 결과 (Shift+Enter)",
+      "search_next": "다음 검색 결과 (Enter)",
+      "search_close": "검색 닫기",
+      "search_clear": "검색 지우기",
       "refresh": "이 세션 새로고침",
       "refresh_error": "새로고침 실패",
       "modal_title": "세션 상세",
