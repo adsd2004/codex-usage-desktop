@@ -532,6 +532,14 @@
     "caveat": "The list shows quota remaining at the latest observed snapshot. Values are estimated from integer log snapshots; each reset window is shown separately."
   },
   "detail": {
+      "search_placeholder": "Search loaded session (⌘/Ctrl+F)",
+      "search_pending": "Searching…",
+      "search_empty": "No matches",
+      "search_error": "Search unavailable",
+      "search_previous": "Previous match (Shift+Enter)",
+      "search_next": "Next match (Enter)",
+      "search_close": "Close search",
+      "search_clear": "Clear search",
       "refresh": "Refresh this session",
       "refresh_error": "Refresh failed",
       "modal_title": "Session Details",

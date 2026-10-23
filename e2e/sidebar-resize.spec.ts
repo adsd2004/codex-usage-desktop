@@ -108,12 +108,14 @@ describe("sidebar resizing", () => {
     await expectWidth(256);
 
     await $('button[aria-label="Collapse sidebar"]').click();
-    expect(await sidebar.getSize("width")).toBe(64);
+    expect(await sidebar.getSize("width")).toBe(80);
+    expect(await $("[data-app-content]").getLocation("x")).toBe(80);
     await expect(handle).not.toBeExisting();
     await expectWindowBackgrounds();
+    await browser.saveScreenshot("/tmp/codex-usage-sidebar-collapsed.png");
     await browser.refresh();
     await expect($('button[aria-label="Expand sidebar"]')).toHaveAttribute("aria-expanded", "false");
-    expect(await sidebar.getSize("width")).toBe(64);
+    expect(await sidebar.getSize("width")).toBe(80);
     await expect(handle).not.toBeExisting();
     await $('button[aria-label="Expand sidebar"]').click();
     await browser.refresh();

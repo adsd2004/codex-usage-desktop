@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { expect, it, vi } from "vitest";
 import i18n from "@/i18n";
 import { buildConversation } from "@/lib/session-conversation";
+import { buildSearchDocuments, SessionSearchIndex } from "@/lib/session-search";
 import type { SessionReplayDetail } from "@/lib/api";
 import { ConversationItem } from "./session-detail-modal";
 import mixedOrchestration from "../../e2e/fixtures/mixed-orchestration.json";
@@ -12,6 +13,97 @@ import clockSleep from "../../e2e/fixtures/clock-sleep.json";
 import backgroundPolls from "../../e2e/fixtures/background-polls.json";
 import searchTerminal from "../../e2e/fixtures/search-terminal.json";
 import openTerminal from "../../e2e/fixtures/open-terminal.json";
+
+it("finds hidden output inside the original exploration group and restores its disclosure state", async () => {
+  await i18n.changeLanguage("en");
+  const tool = (callId: string, command: string, output: string) => ({
+    kind: "toolCall" as const, callId, name: "exec_command", status: "completed", arguments: JSON.stringify({ cmd: command }),
+    output: JSON.stringify({ output, exit_code: 0 }), stderr: null, startedAt: null, completedAt: null, durationMs: null, isError: false,
+  });
+  const turn: SessionReplayDetail["turns"][number] = {
+    turnId: "find", startedAt: null, completedAt: null, durationMs: null, systemMessages: [], userMessages: [], assistantMessages: [],
+    reasoningSummaries: [], toolCalls: [], patchResults: [], tokenEvents: [], errors: [],
+    items: [tool("first", "cat first.txt", "before Needle after"), tool("second", "cat second.txt", "unrelated sibling output")],
+  };
+  const block = buildConversation(turn)[0];
+  expect(block.kind).toBe("exploration");
+  const index = new SessionSearchIndex(buildSearchDocuments([turn]), "");
+  const hit = (await index.search("needle", "timeline", async () => {}))!.hit;
+  const { rerender } = render(<ConversationItem block={block} rawJsonlLines={[]} />);
+  const group = screen.getByRole("region", { name: "Explored" });
+  const disclosure = within(group).getByRole("button", { name: /Explored/ });
+  expect(disclosure).toHaveAttribute("aria-expanded", "false");
+  rerender(<ConversationItem block={block} rawJsonlLines={[]} searchHits={hit ? [hit] : []} />);
+  expect(disclosure).toHaveAttribute("aria-expanded", "true");
+  expect(screen.getByTestId("session-search-current")).toHaveTextContent("Needle");
+  const command = within(group).getByRole("button", { name: /Ran cat first.txt/ });
+  expect(command.parentElement?.querySelector("pre")?.textContent).toBe("└ before Needle after");
+  expect(group).toHaveTextContent("cat second.txt");
+  expect(group).toHaveTextContent("unrelated sibling output");
+  rerender(<ConversationItem block={block} rawJsonlLines={[]} searchHits={[]} />);
+  expect(disclosure).toHaveAttribute("aria-expanded", "false");
+  expect(screen.queryByTestId("session-search-current")).not.toBeInTheDocument();
+});
+
+it("highlights all identical nested outputs while moving only the current match", async () => {
+  await i18n.changeLanguage("en");
+  const turn: SessionReplayDetail["turns"][number] = {
+    turnId: "nested-find", startedAt: null, completedAt: null, durationMs: null, systemMessages: [], userMessages: [], assistantMessages: [],
+    reasoningSummaries: [], toolCalls: [], patchResults: [], tokenEvents: [], errors: [], items: [{
+      kind: "toolCall", callId: "nested", name: "exec", status: "completed", isError: false,
+      arguments: 'text(await tools.exec_command({cmd:"echo first"})); text(await tools.exec_command({cmd:"echo second"}));',
+      output: JSON.stringify([
+        { type: "input_text", text: JSON.stringify({ output: "same Needle output", exit_code: 0 }) },
+        { type: "input_text", text: JSON.stringify({ output: "same Needle output", exit_code: 0 }) },
+      ]), stderr: null, startedAt: null, completedAt: null, durationMs: null,
+    }],
+  };
+  const index = new SessionSearchIndex(buildSearchDocuments([turn]), "");
+  expect(await index.search("Needle", "timeline", async () => {})).toMatchObject({ count: 2 });
+  const block = buildConversation(turn)[0];
+  const { rerender } = render(<ConversationItem block={block} rawJsonlLines={[]} searchHits={index.select(0).matches} />);
+  const first = screen.getByRole("button", { name: /Ran echo first/ });
+  const second = screen.getByRole("button", { name: /Ran echo second/ });
+  expect(within(first.parentElement!).getByTestId("session-search-current")).toHaveTextContent("Needle");
+  expect(second).toHaveAttribute("aria-expanded", "true");
+  expect(screen.getAllByTestId("session-search-match")).toHaveLength(1);
+  rerender(<ConversationItem block={block} rawJsonlLines={[]} searchHits={index.select(1).matches} />);
+  expect(first).toHaveAttribute("aria-expanded", "true");
+  expect(screen.getAllByTestId("session-search-match")).toHaveLength(1);
+  expect(second).toHaveAttribute("aria-expanded", "true");
+  expect(screen.getAllByTestId("session-search-current")).toHaveLength(1);
+  expect(within(second.parentElement!).getByTestId("session-search-current")).toHaveTextContent("Needle");
+});
+
+it.each([
+  ["command", "exec_command", JSON.stringify({ cmd: "echo command-text", workdir: "/find-workdir" }), JSON.stringify({ output: "find-stdout", stderr: "find-stderr", exit_code: 0 })],
+  ["terminal", "write_stdin", JSON.stringify({ session_id: 42, chars: "find-input" }), JSON.stringify({ output: "find-terminal-output", exit_code: 0 })],
+  ["tool", "mcp__test", JSON.stringify({ value: "find-argument" }), "find-tool-output"],
+  ["page", "exec", 'text(await tools.web__run({open:[{ref_id:"https://example.com/find-page"}]}));', "find-page-content"],
+])("locates every indexed field of a %s in its original item", async (_label, name, args, output) => {
+  await i18n.changeLanguage("en");
+  const turn: SessionReplayDetail["turns"][number] = {
+    turnId: "fields", startedAt: null, completedAt: null, durationMs: null, systemMessages: [], userMessages: [], assistantMessages: [],
+    reasoningSummaries: [], toolCalls: [], patchResults: [], tokenEvents: [], errors: [], items: [{
+      kind: "toolCall", callId: "fields", name, arguments: args, output, status: "completed", isError: false,
+      stderr: null, startedAt: null, completedAt: null, durationMs: null,
+    }],
+  };
+  const documents = buildSearchDocuments([turn]);
+  const index = new SessionSearchIndex(documents, "");
+  const blocks = buildConversation(turn);
+  const { rerender } = render(<ConversationItem block={blocks[0]} rawJsonlLines={[]} />);
+  for (const document of documents) {
+    const result = (await index.search(document.text, "timeline", async () => {}))!;
+    for (let selected = 0; selected < result.count; selected += 1) {
+      const hit = index.select(selected).hit!;
+      rerender(<ConversationItem block={blocks[hit.blockIndex]} rawJsonlLines={[]} searchHits={index.select(selected).matches.filter((match) => match.blockIndex === hit.blockIndex)} />);
+      const marks = screen.queryAllByTestId("session-search-current");
+      expect(marks, `${name}: ${hit.field} ${document.text}`).toHaveLength(1);
+      expect(marks[0].textContent).toBe(document.text);
+    }
+  }
+});
 
 it.each([
   ["en", "completed", "Opened"], ["en", null, "Opening"], ["zh", "completed", "已打开网页："],

@@ -25,6 +25,8 @@ const pages = [
 
 const MIN_WIDTH = 160;
 const MAX_WIDTH = 360;
+// Keep the macOS traffic lights fully inside the collapsed sidebar.
+const COLLAPSED_WIDTH = 80;
 export const clampSidebarWidth = (width: number) => Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, width));
 
 export function AppSidebar({ view, onViewChange, collapsed, onToggleCollapsed, width, onWidthChange, showLogsTab }: AppSidebarProps) {
@@ -58,7 +60,7 @@ export function AppSidebar({ view, onViewChange, collapsed, onToggleCollapsed, w
   }, [isResizing, onWidthChange]);
 
   return (
-    <aside data-app-sidebar style={{ width: collapsed ? 64 : resizingWidth ?? width }} className="relative flex h-full shrink-0 flex-col border-r border-border/80 bg-[rgb(var(--sidebar))]">
+    <aside data-app-sidebar style={{ width: collapsed ? COLLAPSED_WIDTH : resizingWidth ?? width }} className="relative flex h-full shrink-0 flex-col border-r border-border/80 bg-[rgb(var(--sidebar))]">
       <div aria-hidden="true" className="h-[var(--window-drag-height)] shrink-0" />
       <div className={`flex h-16 shrink-0 items-center gap-2 px-3 ${collapsed ? "justify-center" : "justify-between"}`}>
         {!collapsed ? <span className="truncate text-sm font-semibold tracking-tight" title={t("header.app_title")}>Codex Usage</span> : null}

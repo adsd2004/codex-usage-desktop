@@ -532,6 +532,14 @@
     "caveat": "列表显示最近一次观测快照时的剩余额度。数值根据日志中的整数快照估算；跨重置周期分别展示。"
   },
   "detail": {
+      "search_placeholder": "搜索已加载的会话（⌘/Ctrl+F）",
+      "search_pending": "搜索中…",
+      "search_empty": "无匹配结果",
+      "search_error": "搜索暂不可用",
+      "search_previous": "上一个匹配（Shift+Enter）",
+      "search_next": "下一个匹配（Enter）",
+      "search_close": "关闭搜索",
+      "search_clear": "清空搜索",
       "refresh": "刷新此会话",
       "refresh_error": "刷新失败",
       "modal_title": "会话详情",

@@ -532,6 +532,14 @@
     "caveat": "列表顯示最近一次觀測快照時的剩餘額度。數值根據日誌中的整數快照估算；跨重置週期分別展示。"
   },
   "detail": {
+      "search_placeholder": "搜尋已載入的工作階段（⌘/Ctrl+F）",
+      "search_pending": "搜尋中…",
+      "search_empty": "無相符結果",
+      "search_error": "搜尋暫時無法使用",
+      "search_previous": "上一個相符結果（Shift+Enter）",
+      "search_next": "下一個相符結果（Enter）",
+      "search_close": "關閉搜尋",
+      "search_clear": "清空搜尋",
       "refresh": "重新整理此工作階段",
       "refresh_error": "重新整理失敗",
       "modal_title": "工作階段詳細資訊",
